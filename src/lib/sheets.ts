@@ -1,4 +1,4 @@
-import type { AppData, YarnDetail, YarnPurchase, Project, YarnUsed } from '../types';
+import type { AppData, YarnDetail, YarnPurchase, Project, Kit } from '../types';
 
 const SHEET_ID = import.meta.env.VITE_SHEET_ID as string;
 
@@ -24,6 +24,10 @@ function cell(row: any[], index: number): string {
   return String(c.v).trim();
 }
 
+function parsePhotoUrls(raw: string): string[] {
+  return raw.split(/\n+/).map(s => s.trim()).filter(Boolean);
+}
+
 function parseColorCodes(raw: string): string[] {
   return raw
     .split(/[,;]+/)
@@ -35,11 +39,11 @@ function parseColorCodes(raw: string): string[] {
 }
 
 export async function fetchAllData(): Promise<AppData> {
-  const [detailRows, purchaseRows, projectRows, usedRows] = await Promise.all([
+  const [detailRows, purchaseRows, projectRows, kitRows] = await Promise.all([
     fetchSheet('Yarn Details'),
     fetchSheet('Yarn Purchases'),
     fetchSheet('Projects'),
-    fetchSheet('Yarn Used'),
+    fetchSheet('Kit'),
   ]);
 
   // Each row from gviz has a `.c` array of cell objects
@@ -51,11 +55,8 @@ export async function fetchAllData(): Promise<AppData> {
       brand: cell(r, 1),
       yarnName: cell(r, 2),
       weight: cell(r, 3),
-      yardage: cell(r, 4),
-      fiber: cell(r, 5),
-      photoUrl: cell(r, 6),
-      availableColor: cell(r, 7),
-      notes: cell(r, 8),
+      fiber: cell(r, 6),
+      notes: cell(r, 7),
     }))
     .filter(y => y.yarnId);
 
@@ -63,19 +64,22 @@ export async function fetchAllData(): Promise<AppData> {
     .map(r => ({
       purchaseId: cell(r, 0),
       yarnId: cell(r, 1),
-      color: cell(r, 2),
-      photoUrl: cell(r, 3),
-      colorCodes: parseColorCodes(cell(r, 4)),
-      date: cell(r, 5),
-      quantity: cell(r, 6),
-      gramsPerSkein: cell(r, 7),
-      totalGrams: cell(r, 8),
-      totalYardage: cell(r, 9),
-      pricePaid: cell(r, 10),
-      currency: cell(r, 11),
-      source: cell(r, 12),
-      status: cell(r, 13),
-      pricePerGram: cell(r, 14),
+      // cols 2 (Yarn Brand) and 3 (Yarn Name) are sheet-only VLOOKUP helpers
+      color: cell(r, 4),
+      photoUrls: parsePhotoUrls(cell(r, 5)),
+      colorCodes: parseColorCodes(cell(r, 6)),
+      date: cell(r, 7),
+      quantity: cell(r, 8),
+      gramsPerSkein: cell(r, 9),
+      yardage: cell(r, 10),
+      totalGrams: cell(r, 11),
+      totalYardage: cell(r, 12),
+      pricePaid: cell(r, 13),
+      currency: cell(r, 14),
+      source: cell(r, 15),
+      status: cell(r, 16),
+      pricePerGram: cell(r, 17),
+      remainingGrams: cell(r, 18),
     }))
     .filter(p => p.purchaseId);
 
@@ -89,23 +93,33 @@ export async function fetchAllData(): Promise<AppData> {
       startDate: cell(r, 5),
       endDate: cell(r, 6),
       needleHookSize: cell(r, 7),
-      photoUrl: cell(r, 8),
+      photoUrls: parsePhotoUrls(cell(r, 8)),
       notes: cell(r, 9),
       tutorialLink: cell(r, 10),
       totalMaterialCost: cell(r, 11),
+      yarn1: cell(r, 12),
+      yarn1GUsed: cell(r, 13),
+      yarn2: cell(r, 14),
+      yarn2GUsed: cell(r, 15),
+      yarn3: cell(r, 16),
+      yarn3GUsed: cell(r, 17),
+      yarn4: cell(r, 18),
+      yarn4GUsed: cell(r, 19),
+      yarn5: cell(r, 20),
+      yarn5GUsed: cell(r, 21),
     }))
     .filter(p => p.projectId);
 
-  const yarnUsed: YarnUsed[] = cells(usedRows)
+  const kits: Kit[] = cells(kitRows)
     .map(r => ({
-      yarnId: cell(r, 0),
-      projectId: cell(r, 1),
-      plannedGrams: cell(r, 2),
-      actualGramsUsed: cell(r, 3),
-      cost: cell(r, 4),
-      notes: cell(r, 5),
+      kitId: cell(r, 0),
+      brand: cell(r, 1),
+      kitName: cell(r, 2),
+      photoUrl: cell(r, 3),
+      price: cell(r, 4),
+      currency: cell(r, 5),
     }))
-    .filter(u => u.yarnId && u.projectId);
+    .filter(k => k.kitId);
 
-  return { yarnDetails, yarnPurchases, projects, yarnUsed };
+  return { yarnDetails, yarnPurchases, projects, kits };
 }

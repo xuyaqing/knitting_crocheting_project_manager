@@ -2,24 +2,24 @@ import { useState } from 'react';
 import { useData } from '../context/DataContext';
 import { YarnCard } from '../components/YarnCard';
 import { ProjectCard } from '../components/ProjectCard';
-import type { AppData } from '../types';
+import { KitCard } from '../components/KitCard';
+import type { AppData, Project } from '../types';
 
-type Tab = 'yarn' | 'projects';
+type Tab = 'yarn' | 'projects' | 'kits';
 
-// Collect color codes for a project, sorted by grams used (most used yarn first).
-function projectSwatches(projectId: string, data: AppData): string[] {
-  return data.yarnUsed
-    .filter(u => u.projectId === projectId)
-    .sort((a, b) => {
-      const ga = parseFloat(a.actualGramsUsed || a.plannedGrams || '0');
-      const gb = parseFloat(b.actualGramsUsed || b.plannedGrams || '0');
-      return gb - ga;
-    })
-    .flatMap(u =>
-      data.yarnPurchases
-        .filter(p => p.yarnId === u.yarnId)
-        .flatMap(p => p.colorCodes)
-    );
+function projectSwatches(project: Project, data: AppData): string[] {
+  const slots = [
+    { id: project.yarn1, g: project.yarn1GUsed },
+    { id: project.yarn2, g: project.yarn2GUsed },
+    { id: project.yarn3, g: project.yarn3GUsed },
+    { id: project.yarn4, g: project.yarn4GUsed },
+    { id: project.yarn5, g: project.yarn5GUsed },
+  ].filter(s => s.id);
+  slots.sort((a, b) => parseFloat(b.g || '0') - parseFloat(a.g || '0'));
+  return slots.flatMap(s => {
+    const purchase = data.yarnPurchases.find(p => p.purchaseId === s.id);
+    return purchase?.colorCodes ?? [];
+  });
 }
 
 export function Gallery() {
@@ -48,7 +48,7 @@ export function Gallery() {
   return (
     <div>
       <div className="flex gap-0 mb-6 border-b border-gray-200">
-        {(['yarn', 'projects'] as Tab[]).map(t => (
+        {(['yarn', 'projects', 'kits'] as Tab[]).map(t => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -60,7 +60,9 @@ export function Gallery() {
           >
             {t === 'yarn'
               ? `Yarn (${data.yarnPurchases.length})`
-              : `Projects (${data.projects.length})`}
+              : t === 'projects'
+              ? `Projects (${data.projects.length})`
+              : `Kits (${data.kits.length})`}
           </button>
         ))}
       </div>
@@ -70,9 +72,11 @@ export function Gallery() {
           <p className="text-gray-400 text-sm py-12 text-center">No yarn purchases yet.</p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {data.yarnPurchases.map(p => (
-              <YarnCard key={p.purchaseId} purchase={p} detail={yarnDetailMap.get(p.yarnId)} />
-            ))}
+            {[...data.yarnPurchases]
+              .sort((a, b) => a.purchaseId.localeCompare(b.purchaseId))
+              .map(p => (
+                <YarnCard key={p.purchaseId} purchase={p} detail={yarnDetailMap.get(p.yarnId)} />
+              ))}
           </div>
         )
       )}
@@ -82,12 +86,29 @@ export function Gallery() {
           <p className="text-gray-400 text-sm py-12 text-center">No projects yet.</p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {data.projects.map(p => (
+            {[...data.projects]
+              .sort((a, b) => {
+                const order: Record<string, number> = { 'Done': 0, 'In Progress': 1, 'Planned': 2 };
+                return (order[a.status] ?? 3) - (order[b.status] ?? 3);
+              })
+              .map(p => (
               <ProjectCard
                 key={p.projectId}
                 project={p}
-                swatches={projectSwatches(p.projectId, data)}
+                swatches={projectSwatches(p, data)}
               />
+            ))}
+          </div>
+        )
+      )}
+
+      {tab === 'kits' && (
+        data.kits.length === 0 ? (
+          <p className="text-gray-400 text-sm py-12 text-center">No kits yet.</p>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            {data.kits.map(k => (
+              <KitCard key={k.kitId} kit={k} />
             ))}
           </div>
         )

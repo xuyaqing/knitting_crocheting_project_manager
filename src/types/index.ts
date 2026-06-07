@@ -3,10 +3,7 @@ export interface YarnDetail {
   brand: string;
   yarnName: string;
   weight: string;
-  yardage: string;
   fiber: string;
-  photoUrl: string;
-  availableColor: string;
   notes: string;
 }
 
@@ -14,11 +11,12 @@ export interface YarnPurchase {
   purchaseId: string;
   yarnId: string;
   color: string;
-  photoUrl: string;
+  photoUrls: string[];
   colorCodes: string[];
   date: string;
   quantity: string;
   gramsPerSkein: string;
+  yardage: string;
   totalGrams: string;
   totalYardage: string;
   pricePaid: string;
@@ -26,6 +24,7 @@ export interface YarnPurchase {
   source: string;
   status: string;
   pricePerGram: string;
+  remainingGrams: string;
 }
 
 export interface Project {
@@ -37,24 +36,34 @@ export interface Project {
   startDate: string;
   endDate: string;
   needleHookSize: string;
-  photoUrl: string;
+  photoUrls: string[];
   notes: string;
   tutorialLink: string;
   totalMaterialCost: string;
+  yarn1: string;
+  yarn1GUsed: string;
+  yarn2: string;
+  yarn2GUsed: string;
+  yarn3: string;
+  yarn3GUsed: string;
+  yarn4: string;
+  yarn4GUsed: string;
+  yarn5: string;
+  yarn5GUsed: string;
 }
 
-export interface YarnUsed {
-  yarnId: string;
-  projectId: string;
-  plannedGrams: string;
-  actualGramsUsed: string;
-  cost: string;
-  notes: string;
+export interface Kit {
+  kitId: string;
+  brand: string;
+  kitName: string;
+  photoUrl: string;
+  price: string;
+  currency: string;
 }
 
 export interface AppData {
   yarnDetails: YarnDetail[];
   yarnPurchases: YarnPurchase[];
   projects: Project[];
-  yarnUsed: YarnUsed[];
+  kits: Kit[];
 }

@@ -4,6 +4,7 @@ import { Layout } from './components/Layout';
 import { Gallery } from './pages/Gallery';
 import { YarnDetail } from './pages/YarnDetail';
 import { ProjectDetail } from './pages/ProjectDetail';
+import { GaugeCalculator } from './pages/GaugeCalculator';
 
 export default function App() {
   return (
@@ -14,6 +15,7 @@ export default function App() {
             <Route path="/" element={<Gallery />} />
             <Route path="/yarn/:yarnId" element={<YarnDetail />} />
             <Route path="/project/:projectId" element={<ProjectDetail />} />
+            <Route path="/calculator" element={<GaugeCalculator />} />
           </Routes>
         </Layout>
       </DataProvider>

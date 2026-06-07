@@ -2,6 +2,8 @@ import { useParams, Link } from 'react-router-dom';
 import { useData } from '../context/DataContext';
 import { ColorSwatch } from '../components/ColorSwatch';
 import { Photo } from '../components/Photo';
+import { PhotoGallery } from '../components/PhotoGallery';
+import { fmtNum } from '../lib/utils';
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
@@ -23,16 +25,16 @@ export function ProjectDetail() {
   const project = data.projects.find(p => p.projectId === projectId);
   if (!project) return <div className="text-center py-16 text-gray-400">Project not found.</div>;
 
-  const yarnsUsed = data.yarnUsed.filter(u => u.projectId === projectId);
+  const purchaseMap = new Map(data.yarnPurchases.map(p => [p.purchaseId, p]));
   const yarnDetailMap = new Map(data.yarnDetails.map(y => [y.yarnId, y]));
 
-  const firstPurchaseMap = new Map(
-    data.yarnDetails.map(y => {
-      const purchases = data.yarnPurchases.filter(p => p.yarnId === y.yarnId);
-      const withPhoto = purchases.find(p => p.photoUrl);
-      return [y.yarnId, withPhoto ?? purchases[0]];
-    })
-  );
+  const yarnSlots = [
+    { purchaseId: project.yarn1, gUsed: project.yarn1GUsed },
+    { purchaseId: project.yarn2, gUsed: project.yarn2GUsed },
+    { purchaseId: project.yarn3, gUsed: project.yarn3GUsed },
+    { purchaseId: project.yarn4, gUsed: project.yarn4GUsed },
+    { purchaseId: project.yarn5, gUsed: project.yarn5GUsed },
+  ].filter(s => s.purchaseId);
 
   return (
     <div>
@@ -42,8 +44,8 @@ export function ProjectDetail() {
 
       {/* Project header */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden mb-6">
-        {project.photoUrl && (
-          <Photo url={project.photoUrl} alt={project.projectName} className="w-full max-h-80" sizePx={800} />
+        {project.photoUrls.length > 0 && (
+          <PhotoGallery urls={project.photoUrls} alt={project.projectName} singleClassName="w-full max-h-80" sizePx={800} />
         )}
         <div className="p-5">
           <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -61,7 +63,7 @@ export function ProjectDetail() {
             {project.startDate && <InfoRow label="Started" value={project.startDate} />}
             {project.endDate && <InfoRow label="Finished" value={project.endDate} />}
             {project.totalMaterialCost && project.totalMaterialCost !== 'N/A' && (
-              <InfoRow label="Total material cost" value={`$${project.totalMaterialCost}`} />
+              <InfoRow label="Total material cost" value={`$${fmtNum(project.totalMaterialCost)}`} />
             )}
           </div>
           {project.notes && <p className="mt-3 text-sm text-gray-500 italic">{project.notes}</p>}
@@ -79,18 +81,18 @@ export function ProjectDetail() {
       </div>
 
       {/* Yarns used */}
-      {yarnsUsed.length > 0 && (
+      {yarnSlots.length > 0 && (
         <section>
           <h2 className="text-base font-semibold text-gray-700 mb-3">Yarns used</h2>
           <div className="space-y-3">
-            {yarnsUsed.map((u, i) => {
-              const detail = yarnDetailMap.get(u.yarnId);
-              const purchase = firstPurchaseMap.get(u.yarnId);
+            {yarnSlots.map((slot, i) => {
+              const purchase = purchaseMap.get(slot.purchaseId);
+              const detail = purchase ? yarnDetailMap.get(purchase.yarnId) : undefined;
               return (
-                <Link key={i} to={`/yarn/${u.yarnId}`} className="block">
+                <Link key={i} to={`/yarn/${purchase?.yarnId}`} className="block">
                   <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 hover:shadow-md transition-shadow flex gap-4">
                     <Photo
-                      url={purchase?.photoUrl ?? ''}
+                      url={purchase?.photoUrls[0] ?? ''}
                       alt={purchase?.color ?? ''}
                       className="w-20 h-20 rounded-lg shrink-0"
                       sizePx={160}
@@ -100,7 +102,7 @@ export function ProjectDetail() {
                         {detail?.brand && (
                           <span className="text-gray-500 font-normal">{detail.brand} </span>
                         )}
-                        {detail?.yarnName ?? u.yarnId}
+                        {detail?.yarnName ?? slot.purchaseId}
                       </p>
                       {purchase && (
                         <div className="mt-1 flex items-center gap-2">
@@ -108,12 +110,11 @@ export function ProjectDetail() {
                           <span className="text-sm text-gray-500">{purchase.color}</span>
                         </div>
                       )}
-                      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-0.5 text-sm text-gray-500">
-                        {u.plannedGrams && <span>Planned: {u.plannedGrams}g</span>}
-                        {u.actualGramsUsed && <span>Actual: {u.actualGramsUsed}g</span>}
-                        {u.cost && u.cost !== 'N/A' && <span>Cost: ${u.cost}</span>}
-                      </div>
-                      {u.notes && <p className="mt-1 text-xs text-gray-400">{u.notes}</p>}
+                      {slot.gUsed && (
+                        <div className="mt-2 text-sm text-gray-500">
+                          Used: {slot.gUsed}g
+                        </div>
+                      )}
                     </div>
                   </div>
                 </Link>

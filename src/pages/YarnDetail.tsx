@@ -3,7 +3,9 @@ import { useData } from '../context/DataContext';
 import { ColorSwatch } from '../components/ColorSwatch';
 import { ProjectCard } from '../components/ProjectCard';
 import { Photo } from '../components/Photo';
-import type { AppData } from '../types';
+import { PhotoGallery } from '../components/PhotoGallery';
+import type { AppData, Project } from '../types';
+import { fmtNum } from '../lib/utils';
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
@@ -14,19 +16,23 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function projectSwatches(projectId: string, data: AppData): string[] {
-  return data.yarnUsed
-    .filter(u => u.projectId === projectId)
-    .sort((a, b) => {
-      const ga = parseFloat(a.actualGramsUsed || a.plannedGrams || '0');
-      const gb = parseFloat(b.actualGramsUsed || b.plannedGrams || '0');
-      return gb - ga;
-    })
-    .flatMap(u =>
-      data.yarnPurchases
-        .filter(p => p.yarnId === u.yarnId)
-        .flatMap(p => p.colorCodes)
-    );
+function yarnSlotsOf(project: Project): string[] {
+  return [project.yarn1, project.yarn2, project.yarn3, project.yarn4, project.yarn5].filter(Boolean);
+}
+
+function projectSwatches(project: Project, data: AppData): string[] {
+  const slots = [
+    { id: project.yarn1, g: project.yarn1GUsed },
+    { id: project.yarn2, g: project.yarn2GUsed },
+    { id: project.yarn3, g: project.yarn3GUsed },
+    { id: project.yarn4, g: project.yarn4GUsed },
+    { id: project.yarn5, g: project.yarn5GUsed },
+  ].filter(s => s.id);
+  slots.sort((a, b) => parseFloat(b.g || '0') - parseFloat(a.g || '0'));
+  return slots.flatMap(s => {
+    const purchase = data.yarnPurchases.find(p => p.purchaseId === s.id);
+    return purchase?.colorCodes ?? [];
+  });
 }
 
 export function YarnDetail() {
@@ -40,10 +46,11 @@ export function YarnDetail() {
   const detail = data.yarnDetails.find(y => y.yarnId === yarnId);
   const purchases = data.yarnPurchases.filter(p => p.yarnId === yarnId);
 
-  const linkedProjectIds = new Set(
-    data.yarnUsed.filter(u => u.yarnId === yarnId).map(u => u.projectId)
+  // Find projects that reference any purchase of this yarn
+  const purchaseIds = new Set(purchases.map(p => p.purchaseId));
+  const linkedProjects = data.projects.filter(p =>
+    yarnSlotsOf(p).some(id => purchaseIds.has(id))
   );
-  const linkedProjects = data.projects.filter(p => linkedProjectIds.has(p.projectId));
 
   if (!detail && purchases.length === 0) {
     return <div className="text-center py-16 text-gray-400">Yarn not found.</div>;
@@ -63,9 +70,7 @@ export function YarnDetail() {
         </h1>
         <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-x-8 gap-y-1.5">
           {detail?.weight && <InfoRow label="Weight" value={detail.weight} />}
-          {detail?.yardage && <InfoRow label="Yardage" value={`${detail.yardage}y`} />}
           {detail?.fiber && <InfoRow label="Fiber" value={detail.fiber} />}
-          {detail?.availableColor && <InfoRow label="Available colors" value={detail.availableColor} />}
         </div>
         {detail?.notes && <p className="mt-3 text-sm text-gray-500 italic">{detail.notes}</p>}
       </div>
@@ -82,17 +87,20 @@ export function YarnDetail() {
                 key={p.purchaseId}
                 className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden"
               >
-                <Photo url={p.photoUrl} alt={p.color} className="w-full h-52" sizePx={600} />
+                <PhotoGallery urls={p.photoUrls} alt={p.color} singleClassName="w-full h-52" sizePx={600} />
                 <div className="p-4">
                   <p className="font-medium text-gray-900 mb-1">{p.color}</p>
+                  <p className="text-xs text-gray-400 mb-2">{p.purchaseId}</p>
                   <ColorSwatch codes={p.colorCodes} size="md" />
                   <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1">
                     {p.totalGrams && <InfoRow label="Total" value={`${p.totalGrams}g`} />}
+                    {p.remainingGrams && <InfoRow label="Remaining" value={`${p.remainingGrams}g`} />}
                     {p.gramsPerSkein && <InfoRow label="Per skein" value={`${p.gramsPerSkein}g`} />}
+                    {p.yardage && <InfoRow label="Yardage/skein" value={`${p.yardage}y`} />}
                     {p.quantity && <InfoRow label="Quantity" value={p.quantity} />}
-                    {p.totalYardage && <InfoRow label="Yardage" value={`${p.totalYardage}y`} />}
+                    {p.totalYardage && <InfoRow label="Total yardage" value={`${p.totalYardage}y`} />}
                     {p.pricePaid && (
-                      <InfoRow label="Price" value={`${p.pricePaid} ${p.currency}`} />
+                      <InfoRow label="Price" value={`${fmtNum(p.pricePaid)} ${p.currency}`} />
                     )}
                     {p.source && <InfoRow label="Source" value={p.source} />}
                     {p.date && <InfoRow label="Purchased" value={p.date} />}
@@ -114,7 +122,7 @@ export function YarnDetail() {
               <ProjectCard
                 key={p.projectId}
                 project={p}
-                swatches={projectSwatches(p.projectId, data)}
+                swatches={projectSwatches(p, data)}
               />
             ))}
           </div>
