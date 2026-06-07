@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter, Routes, Route } from 'react-router-dom';
 import { DataProvider } from './context/DataContext';
 import { Layout } from './components/Layout';
 import { Gallery } from './pages/Gallery';
@@ -8,7 +8,7 @@ import { GaugeCalculator } from './pages/GaugeCalculator';
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <DataProvider>
         <Layout>
           <Routes>
@@ -19,6 +19,6 @@ export default function App() {
           </Routes>
         </Layout>
       </DataProvider>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
