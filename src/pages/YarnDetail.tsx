@@ -2,7 +2,6 @@ import { useParams, Link } from 'react-router-dom';
 import { useData } from '../context/DataContext';
 import { ColorSwatch } from '../components/ColorSwatch';
 import { ProjectCard } from '../components/ProjectCard';
-import { Photo } from '../components/Photo';
 import { PhotoGallery } from '../components/PhotoGallery';
 import type { AppData, Project } from '../types';
 import { fmtNum } from '../lib/utils';
