@@ -57,7 +57,7 @@ export function YarnDetail() {
 
   return (
     <div>
-      <Link to="/" className="text-sm text-gray-400 hover:text-gray-600 mb-5 inline-block">
+      <Link to="/?tab=yarn" className="text-sm text-gray-400 hover:text-gray-600 mb-5 inline-block">
         ← Back to gallery
       </Link>
 

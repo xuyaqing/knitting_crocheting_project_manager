@@ -1,3 +1,41 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-gray-50 text-gray-800 font-sans;
+  }
+
+  /* Soft serif for headings and the wordmark. */
+  h1, h2, h3 {
+    @apply font-display tracking-tight;
+  }
+
+  /* Warm clay selection instead of browser blue. */
+  ::selection {
+    background-color: #F0D6CB;
+    color: #5E3025;
+  }
+}
+
+@layer utilities {
+  /* Thin, unobtrusive scrollbar for the photo strips. */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: #D8CBB6 transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    height: 6px;
+    width: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: #D8CBB6;
+    border-radius: 9999px;
+  }
+}

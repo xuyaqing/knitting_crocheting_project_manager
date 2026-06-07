@@ -38,14 +38,14 @@ export function ProjectDetail() {
 
   return (
     <div>
-      <Link to="/" className="text-sm text-gray-400 hover:text-gray-600 mb-5 inline-block">
+      <Link to="/?tab=projects" className="text-sm text-gray-400 hover:text-gray-600 mb-5 inline-block">
         ← Back to gallery
       </Link>
 
       {/* Project header */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden mb-6">
         {project.photoUrls.length > 0 && (
-          <PhotoGallery urls={project.photoUrls} alt={project.projectName} singleClassName="w-full max-h-80" sizePx={800} />
+          <PhotoGallery urls={project.photoUrls} alt={project.projectName} singleClassName="w-full max-h-[70vh]" sizePx={1000} />
         )}
         <div className="p-5">
           <div className="flex items-start justify-between gap-4 flex-wrap">

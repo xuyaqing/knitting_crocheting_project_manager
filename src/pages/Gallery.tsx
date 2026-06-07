@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useData } from '../context/DataContext';
 import { YarnCard } from '../components/YarnCard';
 import { ProjectCard } from '../components/ProjectCard';
@@ -24,20 +25,46 @@ function projectSwatches(project: Project, data: AppData): string[] {
 
 export function Gallery() {
   const { data, loading, error } = useData();
-  const [tab, setTab] = useState<Tab>('yarn');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const tab: Tab = tabParam === 'projects' || tabParam === 'kits' ? tabParam : 'yarn';
+  const setTab = (t: Tab) =>
+    setSearchParams(t === 'yarn' ? {} : { tab: t }, { replace: true });
+
+  // Remember scroll position per tab so returning from a detail page lands where you were.
+  useEffect(() => {
+    const key = `gallery-scroll-${tab}`;
+    const saved = sessionStorage.getItem(key);
+    window.scrollTo(0, saved ? parseInt(saved, 10) : 0);
+    const onScroll = () => sessionStorage.setItem(key, String(window.scrollY));
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [tab]);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-24 text-gray-400">
-        Loading your stash...
+      <div>
+        <div className="h-6 w-40 rounded-full bg-gray-200/70 animate-pulse mb-6" />
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+              <div className="w-full h-48 bg-gray-100 animate-pulse" />
+              <div className="p-3 space-y-2">
+                <div className="h-3.5 w-3/4 rounded-full bg-gray-200/70 animate-pulse" />
+                <div className="h-3 w-1/2 rounded-full bg-gray-100 animate-pulse" />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
   if (error) {
     return (
-      <div className="py-16 text-center">
-        <p className="text-red-500 font-medium">Could not load data</p>
-        <p className="text-sm text-gray-500 mt-1">{error}</p>
+      <div className="py-20 text-center max-w-sm mx-auto">
+        <p className="font-display text-lg text-gray-800">A dropped stitch</p>
+        <p className="text-sm text-gray-500 mt-1">We couldn't load your stash just now.</p>
+        <p className="text-xs text-gray-400 mt-3 font-mono">{error}</p>
       </div>
     );
   }
@@ -69,7 +96,7 @@ export function Gallery() {
 
       {tab === 'yarn' && (
         data.yarnPurchases.length === 0 ? (
-          <p className="text-gray-400 text-sm py-12 text-center">No yarn purchases yet.</p>
+          <p className="font-display text-gray-500 py-16 text-center">Your stash is empty — add some yarn to begin.</p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             {[...data.yarnPurchases]
@@ -83,7 +110,7 @@ export function Gallery() {
 
       {tab === 'projects' && (
         data.projects.length === 0 ? (
-          <p className="text-gray-400 text-sm py-12 text-center">No projects yet.</p>
+          <p className="font-display text-gray-500 py-16 text-center">No projects yet — your next make starts here.</p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             {[...data.projects]
@@ -104,7 +131,7 @@ export function Gallery() {
 
       {tab === 'kits' && (
         data.kits.length === 0 ? (
-          <p className="text-gray-400 text-sm py-12 text-center">No kits yet.</p>
+          <p className="font-display text-gray-500 py-16 text-center">No kits yet.</p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             {data.kits.map(k => (
