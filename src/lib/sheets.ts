@@ -25,7 +25,9 @@ function cell(row: any[], index: number): string {
 }
 
 function parsePhotoUrls(raw: string): string[] {
-  return raw.split(/\n+/).map(s => s.trim()).filter(Boolean);
+  // Links may be separated by ASCII or fullwidth commas/semicolons, newlines,
+  // or whitespace. URLs never contain spaces, so splitting on whitespace is safe.
+  return raw.split(/[\n,;，；、\s]+/).map(s => s.trim()).filter(Boolean);
 }
 
 function parseColorCodes(raw: string): string[] {

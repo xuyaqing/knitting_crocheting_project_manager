@@ -1,16 +1,18 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { driveThumb } from '../lib/utils';
 
 interface Props {
   urls: string[];
   alt: string;
-  /** Class applied to a single-photo layout (e.g. width + max-height) */
+  /** Class applied to the carousel image (e.g. width + max-height) */
   singleClassName?: string;
   sizePx?: number;
 }
 
 export function PhotoGallery({ urls, alt, singleClassName = '', sizePx = 800 }: Props) {
+  const [current, setCurrent] = useState(0);
   const [lightbox, setLightbox] = useState<number | null>(null);
+  const touchStartX = useRef<number | null>(null);
 
   const valid = urls.filter(Boolean);
   if (valid.length === 0) {
@@ -20,6 +22,18 @@ export function PhotoGallery({ urls, alt, singleClassName = '', sizePx = 800 }: 
       </div>
     );
   }
+
+  const many = valid.length > 1;
+  const idx = Math.min(current, valid.length - 1);
+  const go = (n: number) => setCurrent((idx + n + valid.length) % valid.length);
+
+  const onTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    if (Math.abs(dx) > 40) go(dx < 0 ? 1 : -1);
+    touchStartX.current = null;
+  };
 
   const lightboxEl =
     lightbox !== null ? (
@@ -33,7 +47,7 @@ export function PhotoGallery({ urls, alt, singleClassName = '', sizePx = 800 }: 
         >
           ✕
         </button>
-        {valid.length > 1 && (
+        {many && (
           <button
             className="absolute left-4 text-white text-3xl leading-none disabled:opacity-20"
             disabled={lightbox === 0}
@@ -49,7 +63,7 @@ export function PhotoGallery({ urls, alt, singleClassName = '', sizePx = 800 }: 
           className="max-h-[90vh] max-w-[90vw] rounded-lg object-contain"
           onClick={e => e.stopPropagation()}
         />
-        {valid.length > 1 && (
+        {many && (
           <button
             className="absolute right-4 text-white text-3xl leading-none disabled:opacity-20"
             disabled={lightbox === valid.length - 1}
@@ -58,7 +72,7 @@ export function PhotoGallery({ urls, alt, singleClassName = '', sizePx = 800 }: 
             ›
           </button>
         )}
-        {valid.length > 1 && (
+        {many && (
           <span className="absolute bottom-5 text-white/60 text-sm">
             {lightbox + 1} / {valid.length}
           </span>
@@ -66,19 +80,21 @@ export function PhotoGallery({ urls, alt, singleClassName = '', sizePx = 800 }: 
       </div>
     ) : null;
 
-  // Single photo: show the whole image (no cropping) on a soft backdrop,
-  // click to enlarge.
-  if (valid.length === 1) {
-    return (
-      <>
+  return (
+    <>
+      <div
+        className="group relative w-full bg-gray-100"
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+      >
         <button
-          onClick={() => setLightbox(0)}
-          className="group relative block w-full bg-gray-100 focus:outline-none"
+          onClick={() => setLightbox(idx)}
+          className="block w-full focus:outline-none"
           aria-label="Enlarge photo"
         >
           <img
-            src={driveThumb(valid[0], sizePx)}
-            alt={alt}
+            src={driveThumb(valid[idx], sizePx)}
+            alt={`${alt} ${idx + 1}`}
             referrerPolicy="no-referrer"
             className={`object-contain mx-auto ${singleClassName}`}
             loading="lazy"
@@ -87,30 +103,37 @@ export function PhotoGallery({ urls, alt, singleClassName = '', sizePx = 800 }: 
             ⤢ Enlarge
           </span>
         </button>
-        {lightboxEl}
-      </>
-    );
-  }
 
-  return (
-    <>
-      {/* Horizontal scroll strip */}
-      <div className="flex gap-2 overflow-x-auto px-1 py-1 scrollbar-thin">
-        {valid.map((url, i) => (
-          <button
-            key={i}
-            onClick={() => setLightbox(i)}
-            className="shrink-0 rounded-lg overflow-hidden focus:outline-none focus:ring-2 focus:ring-rose-400"
-          >
-            <img
-              src={driveThumb(url, 400)}
-              alt={`${alt} ${i + 1}`}
-              referrerPolicy="no-referrer"
-              className="h-52 w-auto object-cover"
-              loading="lazy"
-            />
-          </button>
-        ))}
+        {many && (
+          <>
+            <button
+              onClick={() => go(-1)}
+              aria-label="Previous photo"
+              className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/70 hover:bg-white text-gray-700 text-xl leading-none flex items-center justify-center shadow-sm"
+            >
+              ‹
+            </button>
+            <button
+              onClick={() => go(1)}
+              aria-label="Next photo"
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/70 hover:bg-white text-gray-700 text-xl leading-none flex items-center justify-center shadow-sm"
+            >
+              ›
+            </button>
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
+              {valid.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrent(i)}
+                  aria-label={`Go to photo ${i + 1}`}
+                  className={`h-1.5 rounded-full transition-all ${
+                    i === idx ? 'w-5 bg-white' : 'w-1.5 bg-white/60 hover:bg-white/90'
+                  }`}
+                />
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
       {lightboxEl}
