@@ -11,9 +11,11 @@ export interface YarnPurchase {
   purchaseId: string;
   yarnId: string;
   color: string;
+  remainingGrams: string;
+  fiber: string;
   photoUrls: string[];
   colorCodes: string[];
-  date: string;
+  price: string;
   quantity: string;
   gramsPerSkein: string;
   yardage: string;
@@ -24,7 +26,6 @@ export interface YarnPurchase {
   source: string;
   status: string;
   pricePerGram: string;
-  remainingGrams: string;
 }
 
 export interface Project {

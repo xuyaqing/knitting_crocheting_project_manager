@@ -102,7 +102,6 @@ export function YarnDetail() {
                       <InfoRow label="Price" value={`${fmtNum(p.pricePaid)} ${p.currency}`} />
                     )}
                     {p.source && <InfoRow label="Source" value={p.source} />}
-                    {p.date && <InfoRow label="Purchased" value={p.date} />}
                     {p.status && <InfoRow label="Status" value={p.status} />}
                   </div>
                 </div>
