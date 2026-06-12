@@ -95,9 +95,9 @@ export function YarnDetail() {
                     {p.totalGrams && <InfoRow label="Total" value={`${p.totalGrams}g`} />}
                     {p.remainingGrams && <InfoRow label="Remaining" value={`${p.remainingGrams}g`} />}
                     {p.gramsPerSkein && <InfoRow label="Per skein" value={`${p.gramsPerSkein}g`} />}
-                    {p.yardage && <InfoRow label="Yardage/skein" value={`${p.yardage}y`} />}
+                    {p.yardage && <InfoRow label="Length/skein" value={`${p.yardage}m`} />}
                     {p.quantity && <InfoRow label="Quantity" value={p.quantity} />}
-                    {p.totalYardage && <InfoRow label="Total yardage" value={`${p.totalYardage}y`} />}
+                    {p.totalYardage && <InfoRow label="Total length" value={`${p.totalYardage}m`} />}
                     {p.pricePaid && (
                       <InfoRow label="Price" value={`${fmtNum(p.pricePaid)} ${p.currency}`} />
                     )}

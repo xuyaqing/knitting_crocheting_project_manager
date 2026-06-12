@@ -23,7 +23,7 @@ export function YarnCard({ purchase, detail }: Props) {
           <div className="mt-auto pt-2 flex items-end justify-between gap-2">
             <ColorSwatch codes={purchase.colorCodes} />
             <div className="text-right text-xs text-gray-400 shrink-0">
-              {purchase.totalGrams && <div>{purchase.totalGrams}g</div>}
+              {purchase.remainingGrams && <div>{purchase.remainingGrams}g</div>}
               {purchase.pricePaid && (
                 <div>{fmtNum(purchase.pricePaid)} {purchase.currency}</div>
               )}
