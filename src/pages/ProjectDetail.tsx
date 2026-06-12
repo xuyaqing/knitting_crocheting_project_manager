@@ -36,6 +36,11 @@ export function ProjectDetail() {
     { purchaseId: project.yarn5, gUsed: project.yarn5GUsed },
   ].filter(s => s.purchaseId);
 
+  const totalGramsUsed = yarnSlots.reduce((sum, s) => {
+    const g = parseFloat(s.gUsed);
+    return isNaN(g) ? sum : sum + g;
+  }, 0);
+
   return (
     <div>
       <Link to="/?tab=projects" className="text-sm text-gray-400 hover:text-gray-600 mb-5 inline-block">
@@ -62,8 +67,8 @@ export function ProjectDetail() {
             {project.needleHookSize && <InfoRow label="Hook / Needle" value={project.needleHookSize} />}
             {project.startDate && <InfoRow label="Started" value={project.startDate} />}
             {project.endDate && <InfoRow label="Finished" value={project.endDate} />}
-            {project.totalMaterialCost && project.totalMaterialCost !== 'N/A' && (
-              <InfoRow label="Total material cost" value={`$${fmtNum(project.totalMaterialCost)}`} />
+            {totalGramsUsed > 0 && (
+              <InfoRow label="Total materials" value={`${fmtNum(String(totalGramsUsed))}g`} />
             )}
           </div>
           {project.notes && <p className="mt-3 text-sm text-gray-500 italic">{project.notes}</p>}

@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import type { YarnPurchase, YarnDetail } from '../types';
 import { ColorSwatch } from './ColorSwatch';
 import { Photo } from './Photo';
-import { fmtNum } from '../lib/utils';
+import { remainingMeters } from '../lib/utils';
 
 interface Props {
   purchase: YarnPurchase;
@@ -10,6 +10,7 @@ interface Props {
 }
 
 export function YarnCard({ purchase, detail }: Props) {
+  const meters = remainingMeters(purchase);
   return (
     <Link to={`/yarn/${purchase.yarnId}`} className="block group">
       <div className="bg-white rounded-2xl shadow-sm group-hover:shadow-md group-hover:-translate-y-0.5 transition-all duration-200 overflow-hidden border border-gray-200/70 h-full flex flex-col">
@@ -24,9 +25,7 @@ export function YarnCard({ purchase, detail }: Props) {
             <ColorSwatch codes={purchase.colorCodes} />
             <div className="text-right text-xs text-gray-400 shrink-0">
               {purchase.remainingGrams && <div>{purchase.remainingGrams}g</div>}
-              {purchase.pricePaid && (
-                <div>{fmtNum(purchase.pricePaid)} {purchase.currency}</div>
-              )}
+              {meters !== null && <div>{meters.toFixed(0)}m left</div>}
             </div>
           </div>
         </div>
