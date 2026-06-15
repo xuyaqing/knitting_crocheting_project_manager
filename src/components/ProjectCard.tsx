@@ -22,6 +22,16 @@ interface Props {
 }
 
 export function ProjectCard({ project, swatches }: Props) {
+  const totalGramsUsed = [
+    project.yarn1GUsed,
+    project.yarn2GUsed,
+    project.yarn3GUsed,
+    project.yarn4GUsed,
+    project.yarn5GUsed,
+  ].reduce((sum, g) => {
+    const n = parseFloat(g);
+    return isNaN(n) ? sum : sum + n;
+  }, 0);
   return (
     <Link to={`/project/${project.projectId}`} className="block group">
       <div className="bg-white rounded-2xl shadow-sm group-hover:shadow-md group-hover:-translate-y-0.5 transition-all duration-200 overflow-hidden border border-gray-200/70 h-full flex flex-col">
@@ -38,8 +48,8 @@ export function ProjectCard({ project, swatches }: Props) {
           </div>
           <div className="mt-auto pt-2 flex items-end justify-between gap-2">
             {swatches && swatches.length > 0 && <ColorSwatch codes={swatches} />}
-            {project.totalMaterialCost && project.totalMaterialCost !== 'N/A' && (
-              <p className="text-xs text-gray-400 shrink-0">${fmtNum(project.totalMaterialCost)}</p>
+            {totalGramsUsed > 0 && (
+              <p className="text-xs text-gray-400 shrink-0">{fmtNum(String(totalGramsUsed))}g</p>
             )}
           </div>
         </div>
