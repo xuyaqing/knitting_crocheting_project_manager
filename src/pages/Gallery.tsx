@@ -6,7 +6,7 @@ import { ProjectCard } from '../components/ProjectCard';
 import { KitCard } from '../components/KitCard';
 import type { AppData, Project } from '../types';
 
-type Tab = 'yarn' | 'projects' | 'kits';
+type Tab = 'yarn' | 'projects' | 'interested' | 'kits';
 
 function projectSwatches(project: Project, data: AppData): string[] {
   const slots = [
@@ -27,7 +27,7 @@ export function Gallery() {
   const { data, loading, error } = useData();
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get('tab');
-  const tab: Tab = tabParam === 'projects' || tabParam === 'kits' ? tabParam : 'yarn';
+  const tab: Tab = tabParam === 'projects' || tabParam === 'interested' || tabParam === 'kits' ? tabParam : 'yarn';
   const setTab = (t: Tab) =>
     setSearchParams(t === 'yarn' ? {} : { tab: t }, { replace: true });
 
@@ -75,23 +75,28 @@ export function Gallery() {
   return (
     <div>
       <div className="flex gap-0 mb-6 border-b border-gray-200">
-        {(['yarn', 'projects', 'kits'] as Tab[]).map(t => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`px-4 py-2.5 text-sm font-medium capitalize transition-colors border-b-2 -mb-px ${
-              tab === t
-                ? 'border-rose-500 text-rose-600'
-                : 'border-transparent text-gray-500 hover:text-gray-800'
-            }`}
-          >
-            {t === 'yarn'
-              ? `Yarn (${data.yarnPurchases.length})`
-              : t === 'projects'
-              ? `Projects (${data.projects.length})`
-              : `Kits (${data.kits.length})`}
-          </button>
-        ))}
+        {(['yarn', 'projects', 'interested', 'kits'] as Tab[]).map(t => {
+          const activeProjects = data.projects.filter(p => p.status !== 'Interested');
+          const interestedProjects = data.projects.filter(p => p.status === 'Interested');
+          const label =
+            t === 'yarn' ? `Yarn (${data.yarnPurchases.length})`
+            : t === 'projects' ? `Projects (${activeProjects.length})`
+            : t === 'interested' ? `Interested (${interestedProjects.length})`
+            : `Kits (${data.kits.length})`;
+          return (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`px-4 py-2.5 text-sm font-medium capitalize transition-colors border-b-2 -mb-px ${
+                tab === t
+                  ? 'border-rose-500 text-rose-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-800'
+              }`}
+            >
+              {label}
+            </button>
+          );
+        })}
       </div>
 
       {tab === 'yarn' && (
@@ -108,26 +113,36 @@ export function Gallery() {
         )
       )}
 
-      {tab === 'projects' && (
-        data.projects.length === 0 ? (
+      {tab === 'projects' && (() => {
+        const activeProjects = [...data.projects]
+          .filter(p => p.status !== 'Interested')
+          .sort((a, b) => {
+            const order: Record<string, number> = { 'Done': 0, 'In Progress': 1, 'Planned': 2 };
+            return (order[a.status] ?? 3) - (order[b.status] ?? 3);
+          });
+        return activeProjects.length === 0 ? (
           <p className="font-display text-gray-500 py-16 text-center">No projects yet — your next make starts here.</p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {[...data.projects]
-              .sort((a, b) => {
-                const order: Record<string, number> = { 'Done': 0, 'In Progress': 1, 'Planned': 2 };
-                return (order[a.status] ?? 3) - (order[b.status] ?? 3);
-              })
-              .map(p => (
-              <ProjectCard
-                key={p.projectId}
-                project={p}
-                swatches={projectSwatches(p, data)}
-              />
+            {activeProjects.map(p => (
+              <ProjectCard key={p.projectId} project={p} swatches={projectSwatches(p, data)} />
             ))}
           </div>
-        )
-      )}
+        );
+      })()}
+
+      {tab === 'interested' && (() => {
+        const interestedProjects = data.projects.filter(p => p.status === 'Interested');
+        return interestedProjects.length === 0 ? (
+          <p className="font-display text-gray-500 py-16 text-center">No interested projects yet.</p>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            {interestedProjects.map(p => (
+              <ProjectCard key={p.projectId} project={p} swatches={projectSwatches(p, data)} />
+            ))}
+          </div>
+        );
+      })()}
 
       {tab === 'kits' && (
         data.kits.length === 0 ? (
