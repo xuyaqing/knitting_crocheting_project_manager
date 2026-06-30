@@ -1,4 +1,4 @@
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import { useData } from '../context/DataContext';
 import { ColorSwatch } from '../components/ColorSwatch';
 import { Photo } from '../components/Photo';
@@ -17,6 +17,8 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 export function ProjectDetail() {
   const { projectId } = useParams<{ projectId: string }>();
   const { data, loading, error } = useData();
+  const location = useLocation();
+  const backTo = (location.state as { from?: string } | null)?.from ?? '/?tab=projects';
 
   if (loading) return <div className="text-center py-16 text-gray-400">Loading...</div>;
   if (error) return <div className="text-center py-16 text-red-500">Error: {error}</div>;
@@ -43,7 +45,7 @@ export function ProjectDetail() {
 
   return (
     <div>
-      <Link to="/?tab=projects" className="text-sm text-gray-400 hover:text-gray-600 mb-5 inline-block">
+      <Link to={backTo} className="text-sm text-gray-400 hover:text-gray-600 mb-5 inline-block">
         ← Back to gallery
       </Link>
 

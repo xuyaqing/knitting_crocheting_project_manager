@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import type { Project } from '../types';
 import { Photo } from './Photo';
 import { ColorSwatch } from './ColorSwatch';
@@ -22,6 +22,7 @@ interface Props {
 }
 
 export function ProjectCard({ project, swatches }: Props) {
+  const location = useLocation();
   const totalGramsUsed = [
     project.yarn1GUsed,
     project.yarn2GUsed,
@@ -33,7 +34,7 @@ export function ProjectCard({ project, swatches }: Props) {
     return isNaN(n) ? sum : sum + n;
   }, 0);
   return (
-    <Link to={`/project/${project.projectId}`} className="block group">
+    <Link to={`/project/${project.projectId}`} state={{ from: location.pathname + location.search }} className="block group">
       <div className="bg-white rounded-2xl shadow-sm group-hover:shadow-md group-hover:-translate-y-0.5 transition-all duration-200 overflow-hidden border border-gray-200/70 h-full flex flex-col">
         <Photo url={project.photoUrls[0] ?? ''} alt={project.projectName} className="w-full h-48" />
         <div className="p-3 flex flex-col gap-1 flex-1">
