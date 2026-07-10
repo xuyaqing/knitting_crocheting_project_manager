@@ -6,7 +6,7 @@ import { ProjectCard } from '../components/ProjectCard';
 import { KitCard } from '../components/KitCard';
 import type { AppData, Project } from '../types';
 
-type Tab = 'yarn' | 'projects' | 'planned' | 'interested' | 'kits';
+type Tab = 'yarn' | 'yarn-used' | 'projects' | 'planned' | 'interested' | 'kits';
 
 function projectSwatches(project: Project, data: AppData): string[] {
   const slots = [
@@ -27,7 +27,7 @@ export function Gallery() {
   const { data, loading, error } = useData();
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get('tab');
-  const tab: Tab = tabParam === 'projects' || tabParam === 'planned' || tabParam === 'interested' || tabParam === 'kits' ? tabParam : 'yarn';
+  const tab: Tab = tabParam === 'yarn-used' || tabParam === 'projects' || tabParam === 'planned' || tabParam === 'interested' || tabParam === 'kits' ? tabParam : 'yarn';
   const setTab = (t: Tab) =>
     setSearchParams(t === 'yarn' ? {} : { tab: t }, { replace: true });
 
@@ -75,12 +75,15 @@ export function Gallery() {
   return (
     <div>
       <div className="flex gap-0 mb-6 border-b border-gray-200">
-        {(['yarn', 'projects', 'planned', 'interested', 'kits'] as Tab[]).map(t => {
+        {(['yarn', 'yarn-used', 'projects', 'planned', 'interested', 'kits'] as Tab[]).map(t => {
+          const inStash = data.yarnPurchases.filter(p => parseFloat(p.remainingGrams) !== 0);
+          const usedUp = data.yarnPurchases.filter(p => parseFloat(p.remainingGrams) === 0);
           const activeProjects = data.projects.filter(p => p.status !== 'Interested' && p.status !== 'Planned');
           const plannedProjects = data.projects.filter(p => p.status === 'Planned');
           const interestedProjects = data.projects.filter(p => p.status === 'Interested');
           const label =
-            t === 'yarn' ? `Yarn (${data.yarnPurchases.length})`
+            t === 'yarn' ? `Yarn (${inStash.length})`
+            : t === 'yarn-used' ? `Used (${usedUp.length})`
             : t === 'projects' ? `Projects (${activeProjects.length})`
             : t === 'planned' ? `Planned (${plannedProjects.length})`
             : t === 'interested' ? `Interested (${interestedProjects.length})`
@@ -101,19 +104,22 @@ export function Gallery() {
         })}
       </div>
 
-      {tab === 'yarn' && (
-        data.yarnPurchases.length === 0 ? (
-          <p className="font-display text-gray-500 py-16 text-center">Your stash is empty — add some yarn to begin.</p>
+      {(tab === 'yarn' || tab === 'yarn-used') && (() => {
+        const purchases = [...data.yarnPurchases]
+          .filter(p => tab === 'yarn' ? parseFloat(p.remainingGrams) !== 0 : parseFloat(p.remainingGrams) === 0)
+          .sort((a, b) => a.purchaseId.localeCompare(b.purchaseId));
+        return purchases.length === 0 ? (
+          <p className="font-display text-gray-500 py-16 text-center">
+            {tab === 'yarn' ? 'Your stash is empty — add some yarn to begin.' : 'No used-up yarn yet.'}
+          </p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {[...data.yarnPurchases]
-              .sort((a, b) => a.purchaseId.localeCompare(b.purchaseId))
-              .map(p => (
-                <YarnCard key={p.purchaseId} purchase={p} detail={yarnDetailMap.get(p.yarnId)} />
-              ))}
+            {purchases.map(p => (
+              <YarnCard key={p.purchaseId} purchase={p} detail={yarnDetailMap.get(p.yarnId)} />
+            ))}
           </div>
-        )
-      )}
+        );
+      })()}
 
       {tab === 'projects' && (() => {
         const activeProjects = [...data.projects]
