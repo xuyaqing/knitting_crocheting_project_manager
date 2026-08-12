@@ -3,6 +3,7 @@ import type { Project } from '../types';
 import { Photo } from './Photo';
 import { ColorSwatch } from './ColorSwatch';
 import { fmtNum } from '../lib/utils';
+import { useExtractedColors } from '../hooks/useExtractedColors';
 
 const STATUS_COLORS: Record<string, string> = {
   'Done': 'bg-green-100 text-green-700',
@@ -23,6 +24,11 @@ interface Props {
 
 export function ProjectCard({ project, swatches }: Props) {
   const location = useLocation();
+  // Auto-extract colors from the first photo when no manual swatches exist
+  const extractedColors = useExtractedColors(
+    swatches && swatches.length > 0 ? undefined : project.photoUrls[0],
+  );
+  const displaySwatches = swatches && swatches.length > 0 ? swatches : extractedColors;
   const totalGramsUsed = [
     project.yarn1GUsed,
     project.yarn2GUsed,
@@ -48,7 +54,7 @@ export function ProjectCard({ project, swatches }: Props) {
             {project.type && <span className="text-xs text-gray-400">{project.type}</span>}
           </div>
           <div className="mt-auto pt-2 flex items-end justify-between gap-2">
-            {swatches && swatches.length > 0 && <ColorSwatch codes={swatches} />}
+            {displaySwatches.length > 0 && <ColorSwatch codes={displaySwatches} />}
             {totalGramsUsed > 0 && (
               <p className="text-xs text-gray-400 shrink-0">{fmtNum(String(totalGramsUsed))}g</p>
             )}
