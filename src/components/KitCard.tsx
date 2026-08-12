@@ -1,6 +1,5 @@
 import type { Kit } from '../types';
 import { Photo } from './Photo';
-import { fmtNum } from '../lib/utils';
 
 interface Props {
   kit: Kit;
@@ -13,13 +12,6 @@ export function KitCard({ kit }: Props) {
       <div className="p-3 flex flex-col gap-1 flex-1">
         <p className="font-display font-semibold text-gray-900 leading-snug">{kit.kitName}</p>
         {kit.brand && <p className="text-sm text-gray-500">{kit.brand}</p>}
-        {kit.price && (
-          <p className="mt-auto pt-2 text-xs text-gray-400">
-            {kit.currency === 'CNY'
-              ? `$${(parseFloat(kit.price) / 7).toFixed(2)} USD (¥${fmtNum(kit.price)} CNY)`
-              : `$${fmtNum(kit.price)}`}
-          </p>
-        )}
       </div>
     </div>
   );
