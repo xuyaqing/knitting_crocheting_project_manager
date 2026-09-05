@@ -96,7 +96,7 @@ export function ProjectDetail() {
               const purchase = purchaseMap.get(slot.purchaseId);
               const detail = purchase ? yarnDetailMap.get(purchase.yarnId) : undefined;
               return (
-                <Link key={i} to={`/yarn/${purchase?.yarnId}`} className="block">
+                <Link key={i} to={`/yarn/${slot.purchaseId}`} className="block">
                   <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 hover:shadow-md transition-shadow flex gap-4">
                     <Photo
                       url={purchase?.photoUrls[0] ?? ''}

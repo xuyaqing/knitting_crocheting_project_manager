@@ -12,7 +12,7 @@ interface Props {
 export function YarnCard({ purchase, detail }: Props) {
   const meters = remainingMeters(purchase);
   return (
-    <Link to={`/yarn/${purchase.yarnId}`} className="block group">
+    <Link to={`/yarn/${purchase.purchaseId}`} className="block group">
       <div className="bg-white rounded-2xl shadow-sm group-hover:shadow-md group-hover:-translate-y-0.5 transition-all duration-200 overflow-hidden border border-gray-200/70 h-full flex flex-col">
         <Photo url={purchase.photoUrls[0] ?? ''} alt={purchase.color} className="w-full h-48" />
         <div className="p-3 flex flex-col gap-1 flex-1">

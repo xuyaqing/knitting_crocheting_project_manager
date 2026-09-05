@@ -13,7 +13,7 @@ export default function App() {
         <Layout>
           <Routes>
             <Route path="/" element={<Gallery />} />
-            <Route path="/yarn/:yarnId" element={<YarnDetail />} />
+            <Route path="/yarn/:purchaseId" element={<YarnDetail />} />
             <Route path="/project/:projectId" element={<ProjectDetail />} />
             <Route path="/calculator" element={<GaugeCalculator />} />
           </Routes>

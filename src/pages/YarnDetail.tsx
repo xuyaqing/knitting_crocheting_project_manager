@@ -3,8 +3,9 @@ import { useData } from '../context/DataContext';
 import { ColorSwatch } from '../components/ColorSwatch';
 import { ProjectCard } from '../components/ProjectCard';
 import { PhotoGallery } from '../components/PhotoGallery';
+import { Photo } from '../components/Photo';
 import type { AppData, Project } from '../types';
-import { fmtNum } from '../lib/utils';
+import { fmtNum, remainingMeters } from '../lib/utils';
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
@@ -35,25 +36,30 @@ function projectSwatches(project: Project, data: AppData): string[] {
 }
 
 export function YarnDetail() {
-  const { yarnId } = useParams<{ yarnId: string }>();
+  const { purchaseId } = useParams<{ purchaseId: string }>();
   const { data, loading, error } = useData();
 
   if (loading) return <div className="text-center py-16 text-gray-400">Loading...</div>;
   if (error) return <div className="text-center py-16 text-red-500">Error: {error}</div>;
   if (!data) return null;
 
-  const detail = data.yarnDetails.find(y => y.yarnId === yarnId);
-  const purchases = data.yarnPurchases.filter(p => p.yarnId === yarnId);
-
-  // Find projects that reference any purchase of this yarn
-  const purchaseIds = new Set(purchases.map(p => p.purchaseId));
-  const linkedProjects = data.projects.filter(p =>
-    yarnSlotsOf(p).some(id => purchaseIds.has(id))
-  );
-
-  if (!detail && purchases.length === 0) {
+  const purchase = data.yarnPurchases.find(p => p.purchaseId === purchaseId);
+  if (!purchase) {
     return <div className="text-center py-16 text-gray-400">Yarn not found.</div>;
   }
+
+  const detail = data.yarnDetails.find(y => y.yarnId === purchase.yarnId);
+  const meters = remainingMeters(purchase);
+
+  // Projects that use this specific colorway
+  const linkedProjects = data.projects.filter(p =>
+    yarnSlotsOf(p).includes(purchase.purchaseId)
+  );
+
+  // Other colorways of the same yarn (excluding this one)
+  const otherColorways = data.yarnPurchases.filter(
+    p => p.yarnId === purchase.yarnId && p.purchaseId !== purchase.purchaseId
+  );
 
   return (
     <div>
@@ -61,59 +67,40 @@ export function YarnDetail() {
         ← Back to gallery
       </Link>
 
-      {/* Yarn header */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 mb-6">
+      {/* Hero photo */}
+      <PhotoGallery urls={purchase.photoUrls} alt={purchase.color} singleClassName="w-full h-64 sm:h-80 rounded-xl" sizePx={800} />
+
+      {/* Yarn & colorway info */}
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 mt-4 mb-6">
         <h1 className="text-2xl font-bold text-gray-900">
           {detail?.brand && <span className="text-gray-500 font-medium">{detail.brand} </span>}
-          {detail?.yarnName ?? yarnId}
+          {detail?.yarnName ?? purchase.yarnId}
         </h1>
-        <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-x-8 gap-y-1.5">
+        <p className="text-lg text-gray-600 mt-1">{purchase.color}</p>
+        <ColorSwatch codes={purchase.colorCodes} size="md" />
+
+        <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-x-8 gap-y-1.5">
           {detail?.weight && <InfoRow label="Weight" value={detail.weight} />}
           {detail?.fiber && <InfoRow label="Fiber" value={detail.fiber} />}
+          {purchase.totalGrams && <InfoRow label="Total" value={`${purchase.totalGrams}g`} />}
+          {purchase.remainingGrams && <InfoRow label="Remaining" value={`${purchase.remainingGrams}g`} />}
+          {purchase.gramsPerSkein && <InfoRow label="Per skein" value={`${purchase.gramsPerSkein}g`} />}
+          {purchase.yardage && <InfoRow label="Length/skein" value={`${purchase.yardage}m`} />}
+          {purchase.quantity && <InfoRow label="Quantity" value={purchase.quantity} />}
+          {purchase.totalYardage && <InfoRow label="Total length" value={`${purchase.totalYardage}m`} />}
+          {meters !== null && <InfoRow label="Remaining length" value={`${meters.toFixed(0)}m`} />}
+          {purchase.pricePaid && (
+            <InfoRow label="Price" value={`${fmtNum(purchase.pricePaid)} ${purchase.currency}`} />
+          )}
+          {purchase.source && <InfoRow label="Source" value={purchase.source} />}
+          {purchase.status && <InfoRow label="Status" value={purchase.status} />}
         </div>
         {detail?.notes && <p className="mt-3 text-sm text-gray-500 italic">{detail.notes}</p>}
       </div>
 
-      {/* Colorways */}
-      {purchases.length > 0 && (
-        <section className="mb-8">
-          <h2 className="text-base font-semibold text-gray-700 mb-3">
-            Colorways owned ({purchases.length})
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {purchases.map(p => (
-              <div
-                key={p.purchaseId}
-                className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden"
-              >
-                <PhotoGallery urls={p.photoUrls} alt={p.color} singleClassName="w-full h-52" sizePx={600} />
-                <div className="p-4">
-                  <p className="font-medium text-gray-900 mb-1">{p.color}</p>
-                  <p className="text-xs text-gray-400 mb-2">{p.purchaseId}</p>
-                  <ColorSwatch codes={p.colorCodes} size="md" />
-                  <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1">
-                    {p.totalGrams && <InfoRow label="Total" value={`${p.totalGrams}g`} />}
-                    {p.remainingGrams && <InfoRow label="Remaining" value={`${p.remainingGrams}g`} />}
-                    {p.gramsPerSkein && <InfoRow label="Per skein" value={`${p.gramsPerSkein}g`} />}
-                    {p.yardage && <InfoRow label="Length/skein" value={`${p.yardage}m`} />}
-                    {p.quantity && <InfoRow label="Quantity" value={p.quantity} />}
-                    {p.totalYardage && <InfoRow label="Total length" value={`${p.totalYardage}m`} />}
-                    {p.pricePaid && (
-                      <InfoRow label="Price" value={`${fmtNum(p.pricePaid)} ${p.currency}`} />
-                    )}
-                    {p.source && <InfoRow label="Source" value={p.source} />}
-                    {p.status && <InfoRow label="Status" value={p.status} />}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Linked projects */}
+      {/* Used in */}
       {linkedProjects.length > 0 && (
-        <section>
+        <section className="mb-8">
           <h2 className="text-base font-semibold text-gray-700 mb-3">Used in</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             {linkedProjects.map(p => (
@@ -122,6 +109,32 @@ export function YarnDetail() {
                 project={p}
                 swatches={projectSwatches(p, data)}
               />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Other colorways owned */}
+      {otherColorways.length > 0 && (
+        <section className="mb-8">
+          <h2 className="text-base font-semibold text-gray-700 mb-3">
+            Other colorways owned ({otherColorways.length})
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {otherColorways.map(p => (
+              <Link key={p.purchaseId} to={`/yarn/${p.purchaseId}`} className="block group">
+                <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden group-hover:shadow-md group-hover:-translate-y-0.5 transition-all duration-200">
+                  <Photo url={p.photoUrls[0] ?? ''} alt={p.color} className="w-full h-52" sizePx={600} />
+                  <div className="p-4">
+                    <p className="font-medium text-gray-900 mb-1">{p.color}</p>
+                    <ColorSwatch codes={p.colorCodes} size="md" />
+                    <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1">
+                      {p.remainingGrams && <InfoRow label="Remaining" value={`${p.remainingGrams}g`} />}
+                      {p.totalGrams && <InfoRow label="Total" value={`${p.totalGrams}g`} />}
+                    </div>
+                  </div>
+                </div>
+              </Link>
             ))}
           </div>
         </section>
